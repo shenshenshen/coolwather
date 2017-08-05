@@ -32,9 +32,9 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
-public class WeatherActivity extends AppCompatActivity {
-    public SwipeRefreshLayout swipeRefreshLayout;
-    public DrawerLayout drawerLayout;
+public class WeatherActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private DrawerLayout drawerLayout;
     private ScrollView weatherLayout;
     private TextView titleCity;
     private TextView titleUpdateTime;
@@ -47,7 +47,7 @@ public class WeatherActivity extends AppCompatActivity {
     private TextView carWashText;
     private TextView sportText;
     private Button navButton;
-
+    private String WeatherId;
     private ImageView bingPicImg;
 
     @Override
@@ -79,15 +79,14 @@ public class WeatherActivity extends AppCompatActivity {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString = prefs.getString("weather",null);
-        final String weatherId;
         if (weatherString != null){
             Weather weather = Utility.handleWeatherResponse(weatherString);
-            weatherId = weather.basic.wetherId;
+            WeatherId = weather.basic.wetherId;
             showWeatherInfo(weather);
         }else{
-             weatherId = getIntent().getStringExtra("weather_id");
+             WeatherId = getIntent().getStringExtra("weather_id");
             weatherLayout.setVisibility(View.INVISIBLE);
-            requestWeather(weatherId);
+            requestWeather(WeatherId);
         }
 
         String bingPic = prefs.getString("bing_pic",null);
@@ -96,12 +95,7 @@ public class WeatherActivity extends AppCompatActivity {
         }else {
             loadBingPic();
         }
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                requestWeather(weatherId);
-            }
-        });
+        swipeRefreshLayout.setOnRefreshListener(this);
 
         navButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -138,6 +132,7 @@ public class WeatherActivity extends AppCompatActivity {
     public void requestWeather(String weatherId) {
         String weatherUrl = "http://guolin.tech/api/weather?cityid="+
                 weatherId+"&key=e94d551a91574ccaa53c3912cda6f5dd";
+        WeatherId = weatherId;
         HttpUtil.sendOkHttpRequest(weatherUrl, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -213,5 +208,10 @@ public class WeatherActivity extends AppCompatActivity {
         carWashText.setText(carWash);
         sportText.setText(sport);
         weatherLayout.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onRefresh() {
+        requestWeather(WeatherId);
     }
 }
